@@ -20,6 +20,3 @@ func (s State) IsGoal() bool {
 func (s State) Equals(state State) bool {
 	return s.title == state.title && s.target == state.target
 }
-
-func main() {
-}
