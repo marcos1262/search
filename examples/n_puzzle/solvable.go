@@ -1,6 +1,6 @@
 package main
 
-func getInvCount(tab [][]int) (invCount int) {
+func getInvCount(tab [][]uint8) (invCount int) {
 	var n = len(tab)
 	for i := 0; i < n*n-1; i++ {
 		for j := i + 1; j < n*n; j++ {
@@ -17,7 +17,7 @@ func getInvCount(tab [][]int) (invCount int) {
 }
 
 // find Position of blank from bottom
-func findXPosition(tab [][]int) int {
+func findXPosition(tab [][]uint8) int {
 	var n = len(tab)
 	// start from bottom-right corner of matrix
 	for i := n - 1; i >= 0; i-- {
@@ -32,7 +32,7 @@ func findXPosition(tab [][]int) int {
 
 // This function returns true if given
 // instance of N*N - 1 puzzle is solvable
-func isSolvable(tab [][]int) bool {
+func isSolvable(tab [][]uint8) bool {
 	var n = len(tab)
 	// Count inversions in given puzzle
 	var invCount = getInvCount(tab)

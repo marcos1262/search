@@ -5,16 +5,21 @@ import (
 	"math/rand"
 	"time"
 	"search/search"
+	"math"
 )
 
 type state struct {
-	tab  [][]int
-	zero [2]int
-	cost int
+	tab  [][]uint8
+	zero [2]uint8
+	hash uint64
 }
 
 func (s state) Cost() int {
-	return s.cost
+	return 1
+}
+
+func (s state) Hash() uint64 {
+	return s.hash
 }
 
 func (s state) IsGoal() bool {
@@ -24,7 +29,7 @@ func (s state) IsGoal() bool {
 	}
 	for i := 0; i < n; i++ {
 		for j := 0; j < n; j++ {
-			if s.tab[i][j] != i*n+j+1 && j+1 < n {
+			if int(s.tab[i][j]) != i*n+j+1 && j+1 < n {
 				return false
 			}
 		}
@@ -37,7 +42,7 @@ func (s state) String() (str string) {
 	for i, line := range s.tab {
 		str += "\t"
 		for j, item := range line {
-			str += strconv.Itoa(item)
+			str += strconv.Itoa(int(item))
 			if j < len(line)-1 {
 				str += " "
 			} else if i < len(line)-1 {
@@ -47,9 +52,8 @@ func (s state) String() (str string) {
 	}
 	str += "\n\t" +
 		"zero: (" +
-		strconv.Itoa(s.zero[0]) + "," + strconv.Itoa(s.zero[1]) +
-		")\n" +
-		"\tcost: " + strconv.Itoa(s.cost) + "]"
+		strconv.Itoa(int(s.zero[0])) + "," + strconv.Itoa(int(s.zero[1])) +
+		")]"
 	return
 }
 
@@ -60,25 +64,25 @@ func (s state) Actions() []search.Action {
 	if s.zero[0] > 0 {
 		actions = append(actions,
 			action{zero: s.zero,
-				old: [2]int{s.zero[0] - 1, s.zero[1]},
+				old: [2]uint8{s.zero[0] - 1, s.zero[1]},
 			})
 	}
 	if s.zero[1] > 0 {
 		actions = append(actions,
 			action{zero: s.zero,
-				old: [2]int{s.zero[0], s.zero[1] - 1},
+				old: [2]uint8{s.zero[0], s.zero[1] - 1},
 			})
 	}
-	if s.zero[0] < n-1 {
+	if int(s.zero[0]) < n-1 {
 		actions = append(actions,
 			action{zero: s.zero,
-				old: [2]int{s.zero[0] + 1, s.zero[1]},
+				old: [2]uint8{s.zero[0] + 1, s.zero[1]},
 			})
 	}
-	if s.zero[1] < n-1 {
+	if int(s.zero[1]) < n-1 {
 		actions = append(actions,
 			action{zero: s.zero,
-				old: [2]int{s.zero[0], s.zero[1] + 1},
+				old: [2]uint8{s.zero[0], s.zero[1] + 1},
 			})
 	}
 
@@ -87,89 +91,91 @@ func (s state) Actions() []search.Action {
 
 func (s state) Equals(other interface{}) bool {
 	var state = other.(state)
-
-	if s.cost != state.cost {
-		return false
-	}
-	if s.zero != state.zero {
-		return false
-	}
-	for i, line := range s.tab {
-		for j := range line {
-			if s.tab[i][j] != state.tab[i][j] {
-				return false
-			}
-		}
-	}
-	return true
+	return s.hash == state.hash
 }
 
 func (s state) Successor(act search.Action) search.State {
 	var a = act.(action)
 	var n = len(s.tab)
-	var tab [][]int = make([][]int, n)
+	var tab [][]uint8 = make([][]uint8, n)
 
 	for i := 0; i < n; i++ {
-		tab[i] = make([]int, n)
+		tab[i] = make([]uint8, n)
 		for j := 0; j < n; j++ {
 			tab[i][j] = s.tab[i][j]
 		}
 	}
 
-	var successor = state{zero: [2]int{}, cost: s.cost, tab: tab}
+	var successor = state{
+		zero: [2]uint8{},
+		tab:  tab}
 
 	successor.tab[a.zero[0]][a.zero[1]] = successor.tab[a.old[0]][a.old[1]]
 	successor.tab[a.old[0]][a.old[1]] = 0
 	successor.zero = a.old
+	successor.hash = hash(tab)
 
 	return successor
 }
 
+func hash(tab [][]uint8) uint64 {
+	var hash uint64
+	var n = len(tab)
+
+	for i, line := range tab {
+		for j, item := range line {
+			hash += uint64(item) * uint64(math.Pow10(i*n+j))
+		}
+	}
+	return hash
+}
+
 func NewGoalState(n int) search.State {
-	var goal [][]int = make([][]int, n)
+	var goal [][]uint8 = make([][]uint8, n)
 
 	for i := 0; i < n; i++ {
-		goal[i] = make([]int, n)
+		goal[i] = make([]uint8, n)
 		for j := 0; j < n; j++ {
-			goal[i][j] = i*n + j + 1
+			goal[i][j] = uint8(i*n + j + 1)
 		}
 	}
 	goal[n-1][n-1] = 0
 
 	return state{
 		tab:  goal,
-		cost: 0,
-		zero: [2]int{n - 1, n - 1},
+		zero: [2]uint8{uint8(n - 1), uint8(n - 1)},
+		hash: hash(goal),
 	}
 }
 
 // Generate a random solvable initial state
 func NewInitialState(n int) search.State {
-	var initial [][]int = make([][]int, n)
+	var initial [][]uint8 = make([][]uint8, n)
+	var zero = [2]uint8{0, 0}
+
 	var random = rand.New(rand.NewSource(time.Now().UnixNano()))
 	var unordered = random.Perm(n * n)
-	var zero = [2]int{0, 0}
 
 	for i := 0; i < n; i++ {
-		initial[i] = make([]int, n)
+		initial[i] = make([]uint8, n)
 		for j := 0; j < n; j++ {
-			initial[i][j] = unordered[i*n+j]
+			initial[i][j] = uint8(unordered[i*n+j])
 			if initial[i][j] == 0 {
-				zero[0] = i
-				zero[1] = j
+				zero[0] = uint8(i)
+				zero[1] = uint8(j)
 			}
 		}
 	}
 
 	if isSolvable(initial) {
-		println("OK")
+		println("Solvable")
 		return state{
 			tab:  initial,
-			cost: 1,
 			zero: zero,
+			hash: hash(initial),
 		}
 	} else {
-		println("NOT")
+		println("Not Solvable")
 		return NewInitialState(n)
 	}
 

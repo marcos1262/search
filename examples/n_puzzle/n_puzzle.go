@@ -19,27 +19,32 @@ func (p problem) Initial() search.State {
 }
 func (p problem) String() (str string) {
 	return "Problem [" +
-		"\nInitial State: "+p.initial.String()+
-		"\nGoal State: "+p.goal.String()+
+		"\n\tInitial State: "+p.initial.String()+
+		"\n\tGoal State: "+p.goal.String()+
 			"\n]"
 }
 func (p problem) Heuristic(state state) int {
 	// TODO Manhattan distance
+	//for i, line := range state.tab {
+	//	for j := range line {
+	//
+	//	}
+	//}
 	return 0
 }
 
 type action struct {
 	// move piece from old position to zero position
-	old  [2]int
-	zero [2]int
+	old  [2]uint8
+	zero [2]uint8
 }
 
 func (a action) String() (str string) {
 	return "Move zero from " +
 		"(" +
-		strconv.Itoa(a.zero[0]) + "," + strconv.Itoa(a.zero[1]) +
+		strconv.Itoa(int(a.zero[0])) + "," + strconv.Itoa(int(a.zero[1])) +
 		") to (" +
-		strconv.Itoa(a.old[0]) + "," + strconv.Itoa(a.old[1]) +
+		strconv.Itoa(int(a.old[0])) + "," + strconv.Itoa(int(a.old[1])) +
 		")"
 }
 
@@ -51,10 +56,25 @@ func main() {
 		initial: NewInitialState(n),
 	}
 
-	var border = data_structures.NewQueue()
-
-	var solution, steps = search.BlindSearch(problem, border)
-
 	println(problem.String())
-	println(solution.String(), "\nstep count:", steps)
+
+	println("--------- Breath-First Search ---------")
+	var border = data_structures.NewQueue()
+	var solution, statistic = search.GraphSearch(problem, border)
+	println(solution.String())
+	println(statistic.String())
+
+	println("--------- Depth-First Search ---------")
+	var border2 = data_structures.NewStack()
+	solution, statistic = search.GraphSearch(problem, border2)
+	println(solution.String())
+	println(statistic.String())
+
+	//println("--------- Uniform Cost Search ---------")
+	//var border3 = data_structures.NewPriorityQueue()
+	//solution, statistic = search.GraphSearch(problem, border3)
+	//println(solution.String())
+	//println(statistic.String())
+
+
 }

@@ -2,24 +2,22 @@ package search
 
 import (
 	"strconv"
-	"github.com/Workiva/go-datastructures/queue"
+	"time"
+	"fmt"
 )
-
-type State interface {
-	Printable
-	Comparable
-	Cost() int
-	IsGoal() bool
-	Actions() []Action
-	Successor(action Action) State
-}
 
 type Printable interface {
 	String() (str string)
 }
 
-type Comparable interface {
+type State interface {
+	Printable
+	Cost() int
+	Hash() uint64
+	IsGoal() bool
+	Actions() []Action
 	Equals(other interface{}) bool
+	Successor(action Action) State
 }
 
 type Action interface {
@@ -51,88 +49,50 @@ func (s Solution) String() (str string) {
 	return str + "]"
 }
 
-type Node struct {
-	State
-	previous *Node
-	action   Action
-	pathCost int
-	level    int
+type Statistic struct {
+	time          time.Duration
+	qtdSteps      int
+	meanBranching float32
 }
 
-func (n Node) String() (str string) {
-	str += "Node [\n" + n.State.String()
-	if n.action != nil {
-		str += "\naction: " + n.action.String()
-	}
-	str += "\npathCost: " + strconv.Itoa(n.pathCost) +
-		"\nlevel: " + strconv.Itoa(n.level) +
-		"]"
-	return
-}
-func (n Node) Equals(other interface{}) bool {
-	var node = other.(Node)
-	return n.State.Equals(node.State)
-}
-func (n Node) Compare(other queue.Item) int {
-	if n.pathCost > other.(Node).pathCost {
-		return 1
-	} else if n.pathCost < other.(Node).pathCost {
-		return -1
-	} else {
-		return 0
-	}
+func (s Statistic) String() (str string) {
+	return "Statistic [" +
+		"\n\t time: " + s.time.String() +
+		"\n\t qtd. steps: " + strconv.Itoa(s.qtdSteps) +
+		"\n\t mean branching:" + fmt.Sprintf("%.2f", s.meanBranching) +
+		"\n]"
 }
 
-func newNode(previous Node, action Action) Node {
-	var successor = previous.Successor(action)
-	return Node{
-		successor,
-		&previous,
-		action,
-		previous.pathCost + successor.Cost(),
-		previous.level + 1,
-	}
-}
-
-func BlindSearch(problem Problem, border Border) (solution Solution, stepCount int) {
-	var explored = []Node{}
+func GraphSearch(problem Problem, border Border) (solution Solution, stats Statistic) {
+	var start = time.Now()
+	var explored = make(map[uint64]Node)
 
 	border.Put(Node{problem.Initial(), nil, nil, 0, 1})
 
-	for {
-		if border.Empty() {
-			break
-		}
+	for !border.Empty() {
 		var node = border.Get().(Node)
-		//println(node.String())
-		stepCount++
+		var actions = node.Actions()
+
 		if node.IsGoal() {
+			stats.time = time.Since(start)
 			solution = buildSolution(&node)
 			return
 		}
-		explored = append(explored, node)
-		for _, action := range node.Actions() {
+
+		explored[node.State.Hash()] = node
+		stats.meanBranching = (stats.meanBranching*float32(stats.qtdSteps) +
+			float32(len(actions))) / float32(stats.qtdSteps+1)
+		stats.qtdSteps++
+
+		for _, action := range actions {
 			var newNode = newNode(node, action)
-			if isNewState(newNode, explored, border) {
-				//println(newNode.String())
+			if isNewNode(newNode, explored, border) {
 				border.Put(newNode)
 			}
 		}
 	}
-	return Solution{}, stepCount
-}
 
-// Verify if a state is not in the explored set or the border
-func isNewState(node Node, explored []Node, border Border) bool {
-	if border.Contains(node) {
-		return false
-	}
-	for _, nodeExplored := range explored {
-		if node.Equals(nodeExplored) {
-			return false
-		}
-	}
-	return true
+	return Solution{}, stats
 }
 
 // Get actions selected by the search method
@@ -140,7 +100,7 @@ func buildSolution(node *Node) []Action {
 	var actions = []Action{}
 	for node.level > 1 {
 		actions = append(actions, node.action)
-		println(node.State.String())
+		//println(node.State.String())
 		node = node.previous
 	}
 	return actions
