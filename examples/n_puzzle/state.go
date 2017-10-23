@@ -12,10 +12,15 @@ type state struct {
 	tab  [][]uint8
 	zero [2]uint8
 	hash uint64
+	heuristic uint8
 }
 
 func (s state) Cost() int {
-	return 1
+	var cost = 1
+	if search.UseHeuristic {
+		cost += int(s.heuristic)
+	}
+	return cost
 }
 
 func (s state) Hash() uint64 {
@@ -112,8 +117,10 @@ func (s state) Successor(act search.Action) search.State {
 
 	successor.tab[a.zero[0]][a.zero[1]] = successor.tab[a.old[0]][a.old[1]]
 	successor.tab[a.old[0]][a.old[1]] = 0
+
 	successor.zero = a.old
 	successor.hash = hash(tab)
+	successor.heuristic = manhattan(tab)
 
 	return successor
 }
@@ -130,8 +137,27 @@ func hash(tab [][]uint8) uint64 {
 	return hash
 }
 
+func manhattan(tab [][]uint8) uint8 {
+	// Manhattan distance
+	var n = len(tab)
+	var dist uint8
+
+	for i, line := range tab {
+		for j, item := range line {
+			var iGoal, jGoal = int(item-1)/n, int(item-1)%n
+			if item == 0 {
+				iGoal, jGoal = 2, 2
+			}
+			var di = uint8(math.Abs(float64(i - iGoal)))
+			var dj = uint8(math.Abs(float64(j - jGoal)))
+			dist += di + dj
+		}
+	}
+	return dist
+}
+
 func NewGoalState(n int) search.State {
-	var goal [][]uint8 = make([][]uint8, n)
+	var goal = make([][]uint8, n)
 
 	for i := 0; i < n; i++ {
 		goal[i] = make([]uint8, n)
@@ -145,6 +171,7 @@ func NewGoalState(n int) search.State {
 		tab:  goal,
 		zero: [2]uint8{uint8(n - 1), uint8(n - 1)},
 		hash: hash(goal),
+		heuristic:manhattan(goal),
 	}
 }
 
@@ -173,6 +200,7 @@ func NewInitialState(n int) search.State {
 			tab:  initial,
 			zero: zero,
 			hash: hash(initial),
+			heuristic:manhattan(initial),
 		}
 	} else {
 		println("Not Solvable")

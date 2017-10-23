@@ -6,6 +6,8 @@ import (
 	"fmt"
 )
 
+var UseHeuristic bool
+
 type Printable interface {
 	String() (str string)
 }
