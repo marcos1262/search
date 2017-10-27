@@ -3,7 +3,6 @@ package main
 import (
 	"search/search"
 	"strconv"
-	"search/data_structures"
 )
 
 type problem struct {
@@ -51,27 +50,30 @@ func main() {
 
 	//println("--------- Breath-First Search ---------")
 	//var border = data_structures.NewQueue()
-	//var solution, statistic = search.GraphSearch(problem, border)
-	//println(solution.String())
+	//var _, statistic = search.GraphSearch(problem, border)
+	////println(solution.String())
 	//println(statistic.String())
-	//
+
 	//println("--------- Depth-First Search ---------")
-	//var border2 = data_structures.NewStack()
-	//solution, statistic = search.GraphSearch(problem, border2)
+	//var _, statistic = search.DFS_limited(problem)
 	//println(solution.String())
 	//println(statistic.String())
 
 	//println("--------- Uniform Cost Search ---------")
 	//var border3 = data_structures.NewPriorityQueue()
-	//solution, statistic = search.GraphSearch(problem, border3)
-	//println(solution.String())
+	//_, statistic = search.GraphSearch(problem, border3)
+	////println(solution.String())
 	//println(statistic.String())
 
-	//println("--------- A* Search ---------")
-	var border4 = data_structures.NewPriorityQueue()
 	search.UseHeuristic = true
-	var solution, statistic = search.GraphSearch(problem, border4)
-	println(solution.String())
+
+	println("--------- A* Search ---------")
+	var _, statistic = search.A_star(problem)
+	//println(solution.String())
 	println(statistic.String())
 
+	//println("--------- IDA* Search ---------")
+	//_, statistic = search.IDA_star(problem)
+	//println(solution.String())
+	//println(statistic.String())
 }

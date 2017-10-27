@@ -18,7 +18,8 @@ func (n Node) String() (str string) {
 	if n.action != nil {
 		str += "\naction: " + n.action.String()
 	}
-	str += "\npathCost: " + strconv.Itoa(n.pathCost) +
+	str += "\ncost: " + strconv.Itoa(n.Cost()) +
+		"\npathCost: " + strconv.Itoa(n.pathCost) +
 		"\nlevel: " + strconv.Itoa(n.level) +
 		"]"
 	return
@@ -30,9 +31,9 @@ func (n Node) Equals(other interface{}) bool {
 }
 
 func (n Node) Compare(other queue.Item) int {
-	if n.pathCost > other.(Node).pathCost {
+	if n.Cost() > other.(Node).Cost() {
 		return 1
-	} else if n.pathCost < other.(Node).pathCost {
+	} else if n.Cost() < other.(Node).Cost() {
 		return -1
 	} else {
 		return 0
@@ -51,7 +52,7 @@ func newNode(previous Node, action Action) Node {
 }
 
 // Verify if a node is not in the explored set or the border
-func isNewNode(node Node, explored map[uint64]Node, border Border) bool {
+func isNewNode(node Node, explored map[string]Node, border Border) bool {
 	_, ok := explored[node.Hash()]
 	return !ok && !border.Contains(node)
 }

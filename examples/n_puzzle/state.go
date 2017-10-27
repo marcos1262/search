@@ -9,9 +9,9 @@ import (
 )
 
 type state struct {
-	tab  [][]uint8
-	zero [2]uint8
-	hash uint64
+	tab       [][]uint8
+	zero      [2]uint8
+	hash      string
 	heuristic uint8
 }
 
@@ -23,7 +23,7 @@ func (s state) Cost() int {
 	return cost
 }
 
-func (s state) Hash() uint64 {
+func (s state) Hash() string {
 	return s.hash
 }
 
@@ -55,10 +55,9 @@ func (s state) String() (str string) {
 			}
 		}
 	}
-	str += "\n\t" +
-		"zero: (" +
-		strconv.Itoa(int(s.zero[0])) + "," + strconv.Itoa(int(s.zero[1])) +
-		")]"
+	str += "\n\tzero: (" + strconv.Itoa(int(s.zero[0])) + "," + strconv.Itoa(int(s.zero[1])) +
+		")\n\theuristic: " + strconv.Itoa(int(s.heuristic)) +
+		"]"
 	return
 }
 
@@ -102,7 +101,7 @@ func (s state) Equals(other interface{}) bool {
 func (s state) Successor(act search.Action) search.State {
 	var a = act.(action)
 	var n = len(s.tab)
-	var tab [][]uint8 = make([][]uint8, n)
+	var tab = make([][]uint8, n)
 
 	for i := 0; i < n; i++ {
 		tab[i] = make([]uint8, n)
@@ -125,16 +124,13 @@ func (s state) Successor(act search.Action) search.State {
 	return successor
 }
 
-func hash(tab [][]uint8) uint64 {
-	var hash uint64
-	var n = len(tab)
-
-	for i, line := range tab {
-		for j, item := range line {
-			hash += uint64(item) * uint64(math.Pow10(i*n+j))
+func hash(tab [][]uint8) (hash string) {
+	for _, line := range tab {
+		for _, item := range line {
+			hash += string(item + 65)
 		}
 	}
-	return hash
+	return
 }
 
 func manhattan(tab [][]uint8) uint8 {
@@ -168,16 +164,16 @@ func NewGoalState(n int) search.State {
 	goal[n-1][n-1] = 0
 
 	return state{
-		tab:  goal,
-		zero: [2]uint8{uint8(n - 1), uint8(n - 1)},
-		hash: hash(goal),
-		heuristic:manhattan(goal),
+		tab:       goal,
+		zero:      [2]uint8{uint8(n - 1), uint8(n - 1)},
+		hash:      hash(goal),
+		heuristic: manhattan(goal),
 	}
 }
 
 // Generate a random solvable initial state
 func NewInitialState(n int) search.State {
-	var initial [][]uint8 = make([][]uint8, n)
+	var initial = make([][]uint8, n)
 	var zero = [2]uint8{0, 0}
 
 	var random = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -197,10 +193,10 @@ func NewInitialState(n int) search.State {
 	if isSolvable(initial) {
 		println("Solvable")
 		return state{
-			tab:  initial,
-			zero: zero,
-			hash: hash(initial),
-			heuristic:manhattan(initial),
+			tab:       initial,
+			zero:      zero,
+			hash:      hash(initial),
+			heuristic: manhattan(initial),
 		}
 	} else {
 		println("Not Solvable")
