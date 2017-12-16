@@ -125,7 +125,7 @@ func DFS_limited(problem Problem) (solution Solution, stats Statistic) {
 			float32(len(actions))) / float32(stats.qtdSteps+1)
 		stats.qtdSteps++
 
-		if node.level >= 30 {
+		if node.level >= 50 {
 			continue
 		}
 
@@ -156,7 +156,6 @@ func A_star(problem Problem) (solution Solution, stats Statistic) {
 			solution = buildSolution(&node)
 			return
 		}
-		println("\n"+node.String()+"\n")
 
 		stats.meanBranching = (stats.meanBranching*float32(stats.qtdSteps) +
 			float32(len(actions))) / float32(stats.qtdSteps+1)
@@ -164,10 +163,8 @@ func A_star(problem Problem) (solution Solution, stats Statistic) {
 
 		for _, action := range actions {
 			var newNode = newNode(node, action)
-			println(newNode.String())
 			border.Put(newNode)
 		}
-		time.Sleep(3*time.Second)
 	}
 
 	return Solution{}, stats
@@ -183,7 +180,7 @@ func IDA_star(problem Problem) (solution Solution, stats Statistic) {
 	for {
 		for !border.Empty() {
 			var node = border.Get().(Node)
-			var actions= node.Actions()
+			var actions = node.Actions()
 
 			if node.Cost() > limit {
 				limit = node.Cost()
@@ -201,7 +198,7 @@ func IDA_star(problem Problem) (solution Solution, stats Statistic) {
 			stats.qtdSteps++
 
 			for _, action := range actions {
-				var newNode= newNode(node, action)
+				var newNode = newNode(node, action)
 				border.Put(newNode)
 			}
 		}
@@ -215,38 +212,6 @@ func IDA_star(problem Problem) (solution Solution, stats Statistic) {
 		}
 	}
 }
-
-//func search(node Node, stats Statistic, limit *int) (solution Solution) {
-//	var nextLimit = math.MaxInt64
-//	var actions = node.Actions()
-//
-//	if node.Cost() > *limit {
-//		*limit = node.Cost()
-//		return
-//	}
-//	if node.IsGoal() {
-//		stats.level = node.level
-//		return buildSolution(&node)
-//	}
-//
-//	stats.meanBranching = (stats.meanBranching*float32(stats.qtdSteps) +
-//		float32(len(actions))) / float32(stats.qtdSteps+1)
-//	stats.qtdSteps++
-//
-//	for _, action := range actions {
-//		var newNode = newNode(node, action)
-//		solution = search(newNode, stats, limit)
-//		if len(solution) > 0 {
-//			return solution
-//		} else{
-//			nextLimit = int(math.Min(float64(*limit), float64(nextLimit)))
-//			println(nextLimit)
-//		}
-//	}
-//
-//	*limit = nextLimit
-//	return
-//}
 
 // Get actions selected by the search method
 func buildSolution(node *Node) []Action {
